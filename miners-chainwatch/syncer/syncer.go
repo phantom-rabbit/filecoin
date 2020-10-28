@@ -62,11 +62,13 @@ func NewSyncer(minersAddress []string, maxbatch, startEpoch, endEpoch int, node 
 
 }
 
+var flag = false
 func (s *Syncer) Start(ctx context.Context)  {
 	if err := logging.SetLogLevel("syncer", "info"); err != nil {
 		log.Fatal(err)
 	}
 	log.Info("start epoch:", startChainEpoch)
+
 
 	go s.job()
 	go func() {
@@ -97,12 +99,11 @@ func (s *Syncer) Start(ctx context.Context)  {
 				break
 			}
 			maxGorouting <- struct{}{}
-			go func(h int64) {
-				s.syncChainData(ctx, abi.ChainEpoch(h))
-				<- maxGorouting
-			}(height)
+			s.syncChainData(ctx, abi.ChainEpoch(height))
+			<- maxGorouting
 			height ++
 		}
+
 		time.Sleep(30 * 2 * time.Second)
 	}
 }
@@ -113,6 +114,9 @@ func (s *Syncer)job ()  {
 	timer := time.NewTimer(time.Minute * 10)
 	defer timer.Stop()
 	for {
+		if !flag {
+			time.Sleep(10*time.Minute)
+		}
 		<- timer.C
 
 		var localTipset models.TipSet
