@@ -23,9 +23,20 @@ var runCmd = &cli.Command{
 	Name:  "run",
 	Usage: "Start lotus chainwatch",
 	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:  "miners",
+		},
 		&cli.IntFlag{
 			Name:  "max-batch",
 			Value: 50,
+		},
+		&cli.IntFlag{
+			Name:  "start",
+			Value: 148888,
+		},
+		&cli.IntFlag{
+			Name:  "end",
+			Value: 0,
 		},
 	},
 	Action: func(cctx *cli.Context) error {
@@ -83,7 +94,7 @@ var runCmd = &cli.Command{
 			miners = strings.Split(strings.TrimSpace(m), ",")
 		}
 
-		syncer, err := syncer.NewSyncer(miners, cctx.Int("max-batch"), cctx.Int("db"), api)
+		syncer, err := syncer.NewSyncer(miners, cctx.Int("max-batch"), cctx.Int("start"), cctx.Int("end"), api)
 		if err != nil {
 			return err
 		}

@@ -28,6 +28,7 @@ var log = logging.Logger("syncer")
 
 var (
 	startChainEpoch = int64(148888)
+	endCHainEpoch = int64(-1)
 )
 
 type Syncer struct {
@@ -36,7 +37,7 @@ type Syncer struct {
 	node               api.FullNode
 }
 
-func NewSyncer(minersAddress []string, maxbatch, startEpoch int, node api.FullNode) (*Syncer, error) {
+func NewSyncer(minersAddress []string, maxbatch, startEpoch, endEpoch int, node api.FullNode) (*Syncer, error) {
 	miners := make([]address.Address, len(minersAddress))
 	for _, addr := range minersAddress {
 		m, err := address.NewFromString(addr)
@@ -49,6 +50,7 @@ func NewSyncer(minersAddress []string, maxbatch, startEpoch int, node api.FullNo
 
 	if startEpoch > 0 {
 		startChainEpoch = int64(startEpoch)
+		endCHainEpoch = int64(endEpoch)
 	}
 
 	return &Syncer{
@@ -83,6 +85,10 @@ func (s *Syncer) Start(ctx context.Context)  {
 		}
 
 		for height <= (int64(head.Height()) - int64(miner.ChainFinality)) {
+			if height > endCHainEpoch {
+				log.Info("sync Chain Data down!!!")
+				break
+			}
 			maxGorouting <- struct{}{}
 			go func(h int64) {
 				s.syncChainData(ctx, abi.ChainEpoch(h))
