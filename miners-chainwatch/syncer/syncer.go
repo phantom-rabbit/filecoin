@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"gopkg.in/mgo.v2/bson"
-	"runtime"
 	"sort"
 	"time"
 
@@ -69,15 +68,6 @@ func (s *Syncer) Start(ctx context.Context)  {
 	}
 	log.Info("start epoch:", startChainEpoch)
 
-
-	go s.job()
-	go func() {
-		for {
-			fmt.Println("当前携程数量：", runtime.NumGoroutine())
-			time.Sleep(30 * time.Second)
-		}
-	}()
-
 	maxGorouting := make(chan struct{}, s.maxbatch)
 	height := startChainEpoch
 	for {
@@ -104,6 +94,10 @@ func (s *Syncer) Start(ctx context.Context)  {
 			height ++
 		}
 
+		if !flag {
+			go s.job()
+			flag = true
+		}
 		time.Sleep(30 * 2 * time.Second)
 	}
 }
@@ -114,9 +108,6 @@ func (s *Syncer)job ()  {
 	timer := time.NewTimer(time.Minute * 10)
 	defer timer.Stop()
 	for {
-		if !flag {
-			time.Sleep(10*time.Minute)
-		}
 		<- timer.C
 
 		var localTipset models.TipSet
