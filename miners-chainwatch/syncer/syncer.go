@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"gopkg.in/mgo.v2/bson"
+	"runtime"
 	"sort"
 	"time"
 
@@ -38,7 +39,8 @@ type Syncer struct {
 }
 
 func NewSyncer(minersAddress []string, maxbatch, startEpoch, endEpoch int, node api.FullNode) (*Syncer, error) {
-	miners := make([]address.Address, len(minersAddress))
+	minersAddress = []string{"f020742", "f02399", "f023200"}
+	miners := make([]address.Address, 0)
 	for _, addr := range minersAddress {
 		m, err := address.NewFromString(addr)
 		if err != nil {
@@ -52,7 +54,6 @@ func NewSyncer(minersAddress []string, maxbatch, startEpoch, endEpoch int, node 
 		startChainEpoch = int64(startEpoch)
 		endCHainEpoch = int64(endEpoch)
 	}
-
 	return &Syncer{
 		miners: miners,
 		maxbatch: maxbatch,
@@ -68,6 +69,12 @@ func (s *Syncer) Start(ctx context.Context)  {
 	log.Info("start epoch:", startChainEpoch)
 
 	go s.job()
+	go func() {
+		for {
+			fmt.Println("当前携程数量：", runtime.NumGoroutine())
+			time.Sleep(30 * time.Second)
+		}
+	}()
 
 	maxGorouting := make(chan struct{}, s.maxbatch)
 	height := startChainEpoch
@@ -85,7 +92,7 @@ func (s *Syncer) Start(ctx context.Context)  {
 		}
 
 		for height <= (int64(head.Height()) - int64(miner.ChainFinality)) {
-			if height > endCHainEpoch {
+			if endCHainEpoch > 0 && height > endCHainEpoch {
 				log.Info("sync Chain Data down!!!")
 				break
 			}

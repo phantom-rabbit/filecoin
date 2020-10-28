@@ -1,6 +1,9 @@
 package models
 
-import "gopkg.in/mgo.v2"
+import (
+	"gopkg.in/mgo.v2"
+	"time"
+)
 
 var (
 	globalS *mgo.Session
@@ -18,8 +21,11 @@ type MgoConfig struct {
 func Init(c MgoConfig) error {
 	dialInfo := &mgo.DialInfo{
 		Addrs:    []string{c.Host},
+		Direct:   false,
 		Username: c.Username,
 		Password: c.Password,
+		PoolLimit: 4096,
+		Timeout: time.Second * 5,
 	}
 	s, err := mgo.DialWithInfo(dialInfo)
 	if err != nil {
