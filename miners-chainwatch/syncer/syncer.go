@@ -3,8 +3,10 @@ package syncer
 import (
 	"context"
 	"fmt"
+	builtin0 "github.com/filecoin-project/specs-actors/actors/builtin"
 	"gopkg.in/mgo.v2/bson"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/filecoin-project/go-address"
@@ -188,6 +190,12 @@ func (s *Syncer) syncChainData(ctx context.Context, height abi.ChainEpoch) {
 		default:
 			a, err := s.node.StateGetActor(ctx, msg.Message.To, types.EmptyTSK)
 			if err != nil {
+
+				if strings.HasPrefix(msg.Message.To.String(), "f2") {
+					method = util.LotusMethodToStr(builtin0.PaymentChannelActorCodeID, uint64(msg.Message.Method))
+					break
+				}
+
 				a, err = s.node.StateGetActor(ctx, msg.Message.To, t.Key())
 				if err != nil {
 					a, err = s.node.StateGetActor(ctx, msg.Message.To, tNext.Key())
